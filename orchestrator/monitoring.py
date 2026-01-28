@@ -73,14 +73,18 @@ class SystemMonitor:
         
         # Check orchestrator state
         if hasattr(self.orchestrator, 'state'):
-            state_healthy = str(self.orchestrator.state.value) in ['active', 'initializing']
+            from .core import OrchestratorState
+            state_healthy = self.orchestrator.state in [
+                OrchestratorState.ACTIVE,
+                OrchestratorState.INITIALIZING
+            ]
             self.health_status["components"]["orchestrator"] = (
                 "healthy" if state_healthy else "unhealthy"
             )
         
         # Check message bus
         if hasattr(self.orchestrator, 'message_bus'):
-            bus_healthy = self.orchestrator.message_bus._running
+            bus_healthy = self.orchestrator.message_bus.is_running()
             self.health_status["components"]["message_bus"] = (
                 "healthy" if bus_healthy else "unhealthy"
             )

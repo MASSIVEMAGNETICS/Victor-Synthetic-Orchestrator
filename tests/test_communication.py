@@ -13,10 +13,10 @@ async def test_message_bus_initialization():
     bus = MessageBus()
     await bus.initialize()
     
-    assert bus._running is True
+    assert bus.is_running() is True
     
     await bus.shutdown()
-    assert bus._running is False
+    assert bus.is_running() is False
 
 
 @pytest.mark.asyncio

@@ -28,6 +28,10 @@ class MessageBus:
         self._running = True
         self.logger.info("Message bus initialized")
     
+    def is_running(self) -> bool:
+        """Check if message bus is running."""
+        return self._running
+    
     async def publish(self, topic: str, message: Any):
         """
         Publish a message to a topic.

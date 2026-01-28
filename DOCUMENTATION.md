@@ -68,9 +68,9 @@ For API server functionality:
 pip install fastapi uvicorn pydantic
 ```
 
-For development:
+### For development:
 ```bash
-pip install -r requirements.txt[dev]
+pip install ".[dev]"
 ```
 
 ## Quick Start
