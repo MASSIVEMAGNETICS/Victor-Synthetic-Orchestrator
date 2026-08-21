@@ -226,7 +226,6 @@ class ExecutionMesh:
         self.max_concurrency = max_concurrency
         self._workers: Dict[str, Worker] = {}
         self._leases: Dict[str, CapabilityLease] = {}
-        self._semaphore = asyncio.Semaphore(max_concurrency)
 
     def register_worker(self, worker_type: str, worker: Worker, lease: CapabilityLease) -> None:
         if lease.worker_type != worker_type:
@@ -287,8 +286,8 @@ class ExecutionMesh:
                 order.error = None
                 self.ledger.save(order)
 
-    async def _execute_one(self, work_order_id: str) -> None:
-        async with self._semaphore:
+    async def _execute_one(self, work_order_id: str, semaphore: asyncio.Semaphore) -> None:
+        async with semaphore:
             order = self.ledger.get(work_order_id)
             if order is None or order.status != WorkStatus.READY:
                 return
@@ -338,6 +337,7 @@ class ExecutionMesh:
     async def run_until_idle(self) -> Dict[str, int]:
         """Execute runnable graph waves until no more work can progress."""
         self.ledger.recover_interrupted()
+        semaphore = asyncio.Semaphore(self.max_concurrency)
         while True:
             self._refresh_states()
             ready = sorted(
@@ -352,7 +352,7 @@ class ExecutionMesh:
                     if after_ready:
                         continue
                 break
-            await asyncio.gather(*(self._execute_one(o.work_order_id) for o in ready))
+            await asyncio.gather(*(self._execute_one(o.work_order_id, semaphore) for o in ready))
 
         counts: Dict[str, int] = {status.value: 0 for status in WorkStatus}
         for order in self.ledger.all():
