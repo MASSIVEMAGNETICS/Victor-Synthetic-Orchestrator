@@ -1,0 +1,35 @@
+name: Execution Mesh Tests
+
+on:
+  push:
+    branches:
+      - "feat/victor-execution-mesh-v0.1"
+  pull_request:
+    paths:
+      - "orchestrator/mesh.py"
+      - "tests/test_execution_mesh.py"
+      - "examples/portfolio_demo.py"
+      - ".github/workflows/execution-mesh-tests.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verify-execution-mesh:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.11"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install test dependency
+        run: python -m pip install --upgrade pip pytest
+      - name: Compile execution mesh
+        run: python -m py_compile orchestrator/mesh.py examples/portfolio_demo.py
+      - name: Verify execution mesh invariants
+        run: python -m pytest -q tests/test_execution_mesh.py
+      - name: Run offline six-worker portfolio demo
+        run: python -m examples.portfolio_demo
